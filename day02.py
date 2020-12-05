@@ -28,6 +28,6 @@ def run(validate, entries):
 if __name__ == "__main__":
     from input import day02
 
-    entries = [Entry(line) for line in day02.split("\n")]
+    entries = [Entry(line) for line in day02.splitlines()]
     run(part1, entries)
     run(part2, entries)
