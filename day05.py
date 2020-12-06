@@ -1,7 +1,6 @@
 def make_get_value(low_char, high_char, low_val, high_val):
     def get_value(seq):
         low, high = low_val, high_val
-        seq = [c for c in seq if c in (low_char, high_char)]
         for char in seq:
             if char == low_char:
                 high = (low + high) // 2
