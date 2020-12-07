@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from base import BaseSolution
+
 
 class Entry:
     def __init__(self, line):
@@ -9,25 +11,21 @@ class Entry:
         self.password = pieces[-1]
 
 
-def part1(entry):
-    count = sum(1 if c == entry.char else 0 for c in entry.password)
-    return count >= entry.low and count <= entry.high
+class Solution(BaseSolution):
+    def load_data(self, input):
+        return [Entry(line) for line in input.splitlines()]
 
+    def part1(self, entries):
+        def validate(entry):
+            count = sum(1 if c == entry.char else 0 for c in entry.password)
+            return count >= entry.low and count <= entry.high
 
-def part2(entry):
-    pos1_match = entry.password[entry.low - 1] == entry.char
-    pos2_match = entry.password[entry.high - 1] == entry.char
-    return pos1_match != pos2_match
+        return sum(validate(entry) for entry in entries)
 
+    def part2(self, entries):
+        def validate(entry):
+            pos1_match = entry.password[entry.low - 1] == entry.char
+            pos2_match = entry.password[entry.high - 1] == entry.char
+            return pos1_match != pos2_match
 
-def run(validate, entries):
-    valid_count = sum(1 if validate(entry) else 0 for entry in entries)
-    print(valid_count)
-
-
-if __name__ == "__main__":
-    from input import day02
-
-    entries = [Entry(line) for line in day02.splitlines()]
-    run(part1, entries)
-    run(part2, entries)
+        return sum(validate(entry) for entry in entries)

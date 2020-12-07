@@ -1,5 +1,7 @@
 import re
 
+from base import BaseSolution
+
 
 def validate_int(value, value_min=None, value_max=None):
     try:
@@ -70,31 +72,25 @@ def has_required_fields(record):
     return all(field in record for field in required_fields)
 
 
-def part1(data):
-    count = sum(has_required_fields(record) for record in data)
-    print(count)
+class Solution(BaseSolution):
+    def load_data(self, input):
+        return [
+            dict(pair.split(":") for pair in section.split())
+            for section in input.split("\n\n")
+        ]
 
+    def part1(self, data):
+        return sum(has_required_fields(record) for record in data)
 
-def part2(data):
-    count = 0
-    for record in data:
-        valid_record = dict(record)
-        for field in record:
-            value = record[field]
-            validate = required_fields.get(field, lambda _: True)
-            if not validate(value):
-                valid_record.pop(field)
-        if has_required_fields(valid_record):
-            count += 1
-    print(count)
-
-
-if __name__ == "__main__":
-    from input import day04
-
-    data = [
-        dict(pair.split(":") for pair in section.split())
-        for section in day04.split("\n\n")
-    ]
-    part1(data)
-    part2(data)
+    def part2(self, data):
+        count = 0
+        for record in data:
+            valid_record = dict(record)
+            for field in record:
+                value = record[field]
+                validate = required_fields.get(field, lambda _: True)
+                if not validate(value):
+                    valid_record.pop(field)
+            if has_required_fields(valid_record):
+                count += 1
+        return count

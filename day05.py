@@ -1,3 +1,6 @@
+from base import BaseSolution
+
+
 def make_get_value(low_char, high_char, low_val, high_val):
     def get_value(seq):
         low, high = low_val, high_val
@@ -24,21 +27,15 @@ def get_seats(data):
     return seats
 
 
-def part1(data):
-    print(max(get_seats(data)))
+class Solution(BaseSolution):
+    def load_data(self, input):
+        return input.splitlines()
 
+    def part1(self, data):
+        return max(get_seats(data))
 
-def part2(data):
-    seats = sorted(get_seats(data))
-    for i in range(1, len(seats)):
-        if seats[i - 1] != seats[i] - 1:
-            print(seats[i] - 1)
-            return
-
-
-if __name__ == "__main__":
-    from input import day05
-
-    data = day05.splitlines()
-    part1(data)
-    part2(data)
+    def part2(self, data):
+        seats = sorted(get_seats(data))
+        for i in range(1, len(seats)):
+            if seats[i - 1] != seats[i] - 1:
+                return seats[i] - 1
