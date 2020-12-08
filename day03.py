@@ -18,6 +18,5 @@ class Solution(BaseSolution):
 
     def count_trees(self, data, dx, dy):
         return sum(
-            1 if data[y][y // dy * dx % len(data[y])] == "#" else 0
-            for y in range(0, len(data), dy)
+            data[y][y // dy * dx % len(data[y])] == "#" for y in range(0, len(data), dy)
         )

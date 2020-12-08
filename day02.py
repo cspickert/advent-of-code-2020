@@ -17,7 +17,7 @@ class Solution(BaseSolution):
 
     def part1(self, entries):
         def validate(entry):
-            count = sum(1 if c == entry.char else 0 for c in entry.password)
+            count = sum(c == entry.char for c in entry.password)
             return count >= entry.low and count <= entry.high
 
         return sum(validate(entry) for entry in entries)
