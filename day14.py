@@ -1,14 +1,15 @@
 import re
 from dataclasses import dataclass, field
-from typing import List
+from typing import Dict, Literal
 
 from base import BaseSolution
 
 
 @dataclass
 class State:
+    version: Literal[1, 2] = 1
     mask: str = "X" * 36
-    memory: List[int] = field(default_factory=lambda: [0] * 128000)
+    memory: Dict[int, int] = field(default_factory=dict)
 
 
 class Action:
@@ -48,12 +49,36 @@ class SetMemory(Action):
         return f"SetMemory({self.address}, {self.value})"
 
     def update(self, state):
-        value_bits_str = bin(self.value)[2:].rjust(len(state.mask), "0")
+        getattr(self, f"update_v{state.version}")(state)
+
+    def update_v1(self, state):
+        masked_value_str = self.apply_mask(self.value, state.mask, "X")
+        state.memory[self.address] = int(masked_value_str, 2)
+
+    def update_v2(self, state):
+        masked_address_str = self.apply_mask(self.address, state.mask, "0")
+        addresses = []
+        stack = [masked_address_str]
+        while stack:
+            masked_address = stack.pop()
+            try:
+                index = masked_address.index("X")
+                stack.extend(
+                    masked_address[:index] + bit_char + masked_address[index + 1 :]
+                    for bit_char in ("0", "1")
+                )
+            except ValueError:
+                addresses.append(int(masked_address, 2))
+        for address in addresses:
+            state.memory[address] = self.value
+
+    def apply_mask(self, value, mask, ignored_mask_chars):
+        value_bits_str = bin(value)[2:].rjust(len(mask), "0")
         value_bits_str_masked = "".join(
-            bit_char if mask_char == "X" else mask_char
-            for bit_char, mask_char in zip(value_bits_str, state.mask)
+            bit_char if mask_char in ignored_mask_chars else mask_char
+            for bit_char, mask_char in zip(value_bits_str, mask)
         )
-        state.memory[self.address] = int(value_bits_str_masked, 2)
+        return value_bits_str_masked
 
 
 class Solution(BaseSolution):
@@ -61,13 +86,13 @@ class Solution(BaseSolution):
         return [Action.parse(line) for line in input.splitlines()]
 
     def part1(self, data):
-        state = State()
+        return self.process(data, version=1)
+
+    def part2(self, data):
+        return self.process(data, version=2)
+
+    def process(self, data, version):
+        state = State(version=version)
         for action in data:
             action.update(state)
-        return sum(state.memory)
-
-
-if __name__ == "__main__":
-    from run import run
-
-    run(["day14"])
+        return sum(state.memory.values())
