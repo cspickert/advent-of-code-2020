@@ -97,7 +97,7 @@ class Solution(BaseSolution):
         return input.splitlines()
 
     def part1(self, data):
-        return sum(evaluate(line) for i, line in enumerate(data))
+        return sum(evaluate(line) for line in data)
 
     def part2(self, data):
-        return sum(evaluate(line, add_precedence=True) for i, line in enumerate(data))
+        return sum(evaluate(line, add_precedence=True) for line in data)
