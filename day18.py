@@ -40,7 +40,7 @@ class Mul(Operator):
         return lhs_value * rhs_value
 
 
-def build_tree(tokens):
+def build_tree(tokens, add_precedence=False):
     stack = [[]]
     for tok in tokens:
         if tok == "(":
@@ -52,6 +52,21 @@ def build_tree(tokens):
         else:
             stack[-1].append(tok)
     return list(reversed(stack[0]))
+
+
+def build_add_precedence(tree):
+    tree = [
+        build_add_precedence(node) if isinstance(node, list) else node for node in tree
+    ]
+    start = 0
+    while start < len(tree):
+        try:
+            index = tree.index("+")
+            tree[index - 1 : index + 2] = [tree[index - 1 : index + 2]]
+            start = index + 1
+        except ValueError:
+            break
+    return tree
 
 
 def build_expression(tree):
@@ -68,9 +83,11 @@ def build_expression(tree):
         return Mul(lhs, rhs)
 
 
-def evaluate(line):
+def evaluate(line, add_precedence=False):
     tokens = TOKEN_RE.findall(line)
     tree = build_tree(tokens)
+    if add_precedence:
+        tree = build_add_precedence(tree)
     expression = build_expression(tree)
     return expression.evaluate()
 
@@ -81,3 +98,6 @@ class Solution(BaseSolution):
 
     def part1(self, data):
         return sum(evaluate(line) for i, line in enumerate(data))
+
+    def part2(self, data):
+        return sum(evaluate(line, add_precedence=True) for i, line in enumerate(data))
