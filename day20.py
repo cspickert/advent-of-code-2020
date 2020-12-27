@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass
-from typing import Tuple
+from functools import cached_property
+from typing import List, Tuple
 
 from base import BaseSolution
 
@@ -8,7 +9,7 @@ from base import BaseSolution
 @dataclass(frozen=True)
 class Tile:
     id: int
-    edges: Tuple[str]
+    data: List[str]
     rotation: int = 0
     flip: bool = False
 
@@ -20,37 +21,35 @@ class Tile:
         lines = text.splitlines()
         tile_id = int(lines[0].rstrip(":").split()[-1])
         tile_data = lines[1:]
-        return Tile(id=tile_id, edges=cls.make_edges(tile_data))
+        return Tile(id=tile_id, data=tile_data)
 
-    @classmethod
-    def make_edges(cls, tile_data):
-        top = tile_data[0]
-        left = "".join(row[0] for row in tile_data)
-        bottom = tile_data[-1]
-        right = "".join(row[-1] for row in tile_data)
+    @cached_property
+    def content(self):
+        return ["".join(row[1:-1]) for row in self.data[1:-1]]
+
+    @cached_property
+    def edges(self):
+        top = self.data[0]
+        left = "".join(row[0] for row in self.data)
+        bottom = self.data[-1]
+        right = "".join(row[-1] for row in self.data)
         return (top, left, bottom, right)
 
-    @property
+    @cached_property
     def rotated(self):
-        edges = (
-            self.edges[3],
-            "".join(reversed(self.edges[0])),
-            self.edges[1],
-            "".join(reversed(self.edges[2])),
-        )
-        return Tile(id=self.id, edges=edges, rotation=(self.rotation + 1) % 4)
+        dim = len(self.data)
+        data = [
+            "".join(self.data[col][dim - row - 1] for col in range(dim))
+            for row in range(dim)
+        ]
+        return Tile(id=self.id, data=data, rotation=(self.rotation + 1) % 4)
 
-    @property
+    @cached_property
     def flipped(self):
-        edges = (
-            "".join(reversed(self.edges[0])),
-            self.edges[3],
-            "".join(reversed(self.edges[2])),
-            self.edges[1],
-        )
-        return Tile(id=self.id, edges=edges, rotation=self.rotation, flip=not self.flip)
+        data = ["".join(reversed(row)) for row in self.data]
+        return Tile(id=self.id, data=data, rotation=self.rotation, flip=not self.flip)
 
-    @property
+    @cached_property
     def all_rotations(self):
         return [
             self,
@@ -59,7 +58,7 @@ class Tile:
             self.rotated.rotated.rotated,
         ]
 
-    @property
+    @cached_property
     def all_orientations(self):
         return self.all_rotations + self.flipped.all_rotations
 
