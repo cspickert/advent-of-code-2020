@@ -1,4 +1,56 @@
+import math
+
 from base import BaseSolution
+
+
+class Node:
+    @classmethod
+    def from_list(cls, numbers):
+        head = None
+        prev = None
+        for num in numbers:
+            node = Node(num)
+            if not head:
+                head = node
+            if prev:
+                prev.next = node
+            prev = node
+        prev.next = head
+        return head
+
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
+    def __repr__(self):
+        return f"Node({self.value})"
+
+    def __iter__(self):
+        yield self
+        current = self.next
+        while current and current != self:
+            yield current
+            current = current.next
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if isinstance(other, Node):
+            return self.value == other.value
+        return self.value == other
+
+    def __lt__(self, other):
+        if isinstance(other, Node):
+            return self.value < other.value
+        return self.value < other
+
+    def __ge__(self, other):
+        if isinstance(other, Node):
+            return self.value >= other.value
+        return self.value >= other
+
+    def find(self, value):
+        return next(n for n in self if n.value == value)
 
 
 class Solution(BaseSolution):
@@ -6,44 +58,65 @@ class Solution(BaseSolution):
         return [int(i) for i in input]
 
     def part1(self, data):
-        current_idx = 0
+        node = Node.from_list(data)
+        node_min = min(node)
+        node_max = max(node)
+        mapping = {n.value: n for n in node}
         for i in range(1, 101):
-            data, current_idx = self.do_move(data, current_idx)
-        idx = data.index(1)
-        return "".join(str(i) for i in data[idx + 1 :] + data[:idx])
+            # print("--", "move", i, "--")
+            node = self.do_move(node, node_min, node_max, mapping)
+            # print()
+        while node.value != 1:
+            node = node.next
+        return "".join(str(i.value) for i in list(node)[1:])
 
-    def do_move(self, data, current_idx=0):
-        current_label = data[current_idx]
+    def part2(self, orig_data):
+        data = orig_data + [i for i in range(max(orig_data) + 1, 1000001)]
+        node = Node.from_list(data)
+        node_min = min(node)
+        node_max = max(node)
+        mapping = {n.value: n for n in node}
+        for i in range(10000000):
+            node = self.do_move(node, node_min, node_max, mapping)
+        while node.value != 1:
+            node = node.next
+        return math.prod(n.value for n in list(node)[1:3])
 
-        # Remove the 3 cups clockwise from the current cup.
-        removal_indices = []
-        removal_idx = current_idx + 1
-        while len(removal_indices) < 3:
-            removal_idx %= len(data)
-            removal_indices.append(removal_idx)
-            removal_idx += 1
+    def do_move(self, current, node_min, node_max, mapping):
+        # print(
+        #     "cups:",
+        #     " ".join(f"({i.value})" if i is current else str(i.value) for i in current),
+        # )
 
-        removed = [data[i] for i in removal_indices]
-        data = [data[i] for i in range(len(data)) if i not in removal_indices]
+        removed_head = current.next
+        rest = removed_head
+        removed_tail = rest
+        for _ in range(3):
+            removed_tail = rest
+            rest = rest.next
+        current.next = rest
+        removed_tail.next = None
+
+        # print("pick up:", ", ".join(str(i.value) for i in removed_head))
 
         # Find the destination cup.
-        dest_cup_label = current_label - 1
-        while dest_cup_label not in data:
-            if dest_cup_label < min(data):
-                dest_cup_label = max(data)
-                break
-            dest_cup_label -= 1
-        dest_cup_idx = data.index(dest_cup_label)
+        dest_cup_label = current.value - 1
+        while dest_cup_label not in mapping or mapping[dest_cup_label] in removed_head:
+            if dest_cup_label < node_min.value:
+                dest_cup_label = node_max.value
+            else:
+                dest_cup_label -= 1
+        dest_cup_node = mapping[dest_cup_label]
+
+        # print("destination:", dest_cup_label)
 
         # Update the current cup.
-        current_label = data[(data.index(current_label) + 1) % len(data)]
+        current = current.next
 
         # Add the removed cups.
-        insertion_idx = dest_cup_idx + 1
-        data = data[:insertion_idx] + removed + data[insertion_idx:]
+        dest_cup_tail = dest_cup_node.next
+        dest_cup_node.next = removed_head
+        removed_tail.next = dest_cup_tail
 
-        # Get the index of the current cup.
-        current_idx = data.index(current_label)
-
-        # Return the result.
-        return data, current_idx
+        # Return the current node.
+        return current
